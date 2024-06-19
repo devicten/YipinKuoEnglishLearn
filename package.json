@@ -12,6 +12,8 @@
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.10.4",
+    "@types/crypto-js": "^4.2.2",
+    "@types/jsonwebtoken": "^9.0.6",
     "bootstrap": "^5.3.2",
     "nuxt": "^3.12.2",
     "nuxt-bootstrap-icons": "^1.1.5",
@@ -35,6 +37,7 @@
     "bootstrap-icons-vue": "^1.11.3",
     "bootstrap-vue": "^2.23.1",
     "cookie": "^0.6.0",
+    "execa": "^9.2.0",
     "express": "^4.19.2",
     "font-awesome": "^4.7.0",
     "h3": "^1.11.1",

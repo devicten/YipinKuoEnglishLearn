@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     const s1 = getCookie(event, "s1");
     const level = s1 != undefined ? JSON.parse(s1).level : 1;
     const account = s1 != undefined ? JSON.parse(s1).account : "GUEST::" + ip;
-    const body = await readBody(event);
+    //const body = await readBody(event);
 
     const questdata = (await findSQL("quest", {
       account: account,

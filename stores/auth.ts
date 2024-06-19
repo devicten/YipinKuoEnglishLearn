@@ -1,12 +1,22 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 
-export const useAuthStore = defineStore('auth', {
+export interface QuestResult {
+  quest: {
+    /* Structure of your quest data */
+  }[];
+  answer: {
+    status: number;
+    /* ... other properties */
+  }[];
+}
+
+export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: '',
+    token: "",
     IsLogin: false,
     IsAdmin: false,
-    OwnIds: [],
-    UserName: 'UNKNOWN',
+    OwnIds: [] as any[],
+    UserName: "UNKNOWN",
     showslot: true,
     showlogin: false,
     showforgetpassword: false,
@@ -19,19 +29,27 @@ export const useAuthStore = defineStore('auth', {
     vTimesQuest: 0,
     vRemainQuest: 0,
     vIdx: -1,
-    vIdx2: -1
+    vIdx2: -1,
   }),
   actions: {
-    setAuthentication(token, IsLogin, IsAdmin, OwnIds, UserName) {
+    setAuthentication(
+      token: string,
+      IsLogin: boolean,
+      IsAdmin: boolean,
+      OwnIds: any[],
+      UserName: string
+    ) {
       this.token = token;
       this.IsLogin = IsLogin;
       this.IsAdmin = IsAdmin;
       this.OwnIds = OwnIds;
       this.UserName = UserName;
     },
-    setQuest(result) {
+    setQuest(result: QuestResult) {
       this.vTotalQuest = result.quest.length;
-      this.vCurrentQuest = result.answer.filter((obj) => obj.status === 1).length;
+      this.vCurrentQuest = result.answer.filter(
+        (obj) => obj.status === 1
+      ).length;
       this.vTimesQuest = 15;
     },
   },

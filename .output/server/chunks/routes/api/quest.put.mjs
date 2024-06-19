@@ -29,10 +29,13 @@ const quest_put = defineEventHandler(async (event) => {
   try {
     const ip = event.node.req.headers["x-forwarded-for"];
     const s1 = getCookie(event, "s1");
-    const level = s1 != void 0 ? s1.level : 1;
-    const account = s1 != void 0 ? s1.account : "GUEST::" + ip;
+    const level = s1 != void 0 ? JSON.parse(s1).level : 1;
+    const account = s1 != void 0 ? JSON.parse(s1).account : "GUEST::" + ip;
     const body = await readBody(event);
-    const questdata = await findSQL("quest", { account, status: 0 });
+    const questdata = await findSQL("quest", {
+      account,
+      status: 0
+    });
     if (questdata.length == 1) {
       var answer = questdata[0].answer;
       for (var ii = 0; ii < answer.length; ii++) {
@@ -44,7 +47,11 @@ const quest_put = defineEventHandler(async (event) => {
         }
       }
       var status = answer.filter((obj) => obj.status === 0).length == 0 ? 1 : 0;
-      await updateSQL("quest", { _id: questdata[0]._id }, { status, answer });
+      await updateSQL(
+        "quest",
+        { _id: questdata[0]._id },
+        { status, answer }
+      );
       return { code: 200, message: "", result: null };
     }
     return { code: 500, message: "Service Error.", result: null };

@@ -1,13 +1,11 @@
 <script lang="ts" setup>
-import $ from 'jquery'
-import { useAuthStore } from '~/stores/auth';
 import { reactive } from "vue";
-const authStore = useAuthStore();
+  
+import $ from 'jquery'
 const { $bootstrap } = useNuxtApp();
-const toastRef = ref(null);
-const questRef = ref(null);
-const inputRef = ref(null);
-let toastRR, questRR, inputRR;
+  
+import { useAuthStore } from '~/stores/auth';
+const authStore = useAuthStore();
 
 const state = reactive({
   quest: "",
@@ -16,23 +14,26 @@ const state = reactive({
   infodesc: "",
   answer: "",
   word: "",
-  score: 100,
+  score: 0,
   message: ""
 });
+  
+const toastRef = ref(null);
+const questRef = ref(null);
+const inputRef = ref(null);
+  
+let toastRR, questRR, inputRR;
 
 onMounted(() => {
   toastRR = $bootstrap.toast(toastRef.value);
   questRR = questRef.value;
   inputRR = inputRef.value;
-  Quest();
+  setTimeout(Quest, 500);
 });
   
 onBeforeUnmount(() => {
   toastRR.dispose();
 });
-function _uuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {var r = Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;return v.toString(16);});
-}
 
 async function Quest()
 {
@@ -60,7 +61,14 @@ async function Quest()
       toastRR.show();
       return;
     }
-    authStore.setQuest(result.result);
+    
+    try {
+      authStore.setQuest(result.result);
+    } catch (error) {
+      setTimeout(() => {
+        try { authStore.setQuest(result.result); } catch { }
+      }, 500);
+    }
     
     var d0 = result.result.answer.filter((obj) => obj.status === 0); 
     var q0 = d0.reduce((previous, current) => {
@@ -85,8 +93,6 @@ async function Quest()
     state.info4 = qq0.info4;
     state.info5 = qq0.info5;
     state.score = qa0.score;
-    
-    
     
     var arrw = $(".w");
     var questRefId = document.getElementById('questRefId');
@@ -132,11 +138,13 @@ async function Quest()
   }
   catch(e)
   {
+    console.log(e);
     state.message = e.message;
     toastRR.show();
   }
 }
 
+  /*
 async function onkeyup(e)
 {
   inputRR.value = '';
@@ -235,7 +243,6 @@ async function onkeyup(e)
   return;
 }
 
-
 watch(
   () => authStore.vIdx2,
   (newValue, oldValue) => {
@@ -274,6 +281,8 @@ function ToCDB(str) {
     } 
     return tmp 
 } 
+
+*/
 </script>
 
 <template>
@@ -285,8 +294,8 @@ function ToCDB(str) {
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   </div>
-  <div class="text-title text-center">新單字  - {{ authStore.vIdx }} - {{ state.score }} </div>
-  <div class="quest" id="questRefId" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
+  <div class="text-title text-center">新單字 - {{ authStore.vIdx }} - {{ state.score }} </div>
+  <div class="quest" id="questRefId" ref="questRef"><input ref="inputRef" type="text" class="w-input" /></div>
   <div class="text-desc text-first"> {{ state.info0 }} </div>
 </div>
 <div class="box-1">

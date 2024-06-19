@@ -14,8 +14,14 @@ import 'node:url';
 const rtcfg = useRuntimeConfig();
 const login_post = defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const encryptpassword = CryptoJS.HmacSHA512(body.password, rtcfg.pwdKey).toString();
-  const userdata = await findSQL("user", { account: body.account, password: encryptpassword });
+  const encryptpassword = CryptoJS.HmacSHA512(
+    body.password,
+    rtcfg.pwdKey
+  ).toString();
+  const userdata = await findSQL("user", {
+    account: body.account,
+    password: encryptpassword
+  });
   if (userdata.length == 1) {
     delete userdata[0].password;
     const maxAge = 60 * 60 * 24 * 7;

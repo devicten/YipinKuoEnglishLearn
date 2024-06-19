@@ -1,4 +1,4 @@
-import { _ as _export_sfc, d as useNuxtApp, c as useAuthStore } from './server.mjs';
+import { _ as _export_sfc, c as useNuxtApp, d as useAuthStore } from './server.mjs';
 import { useSSRContext, defineComponent, ref, reactive, watch, mergeProps, resolveComponent, resolveDirective } from 'vue';
 import { ssrRenderComponent, ssrRenderStyle, ssrRenderSlot, ssrRenderAttrs, ssrInterpolate, ssrRenderAttr, ssrIncludeBooleanAttr, ssrLooseContain, ssrGetDirectiveProps, ssrGetDynamicModelProps, ssrLooseEqual } from 'vue/server-renderer';
 import '../runtime.mjs';
@@ -440,4 +440,4 @@ _sfc_main.setup = (props, ctx) => {
 const _default = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", _sfc_ssrRender], ["__file", "/home/runner/YipinKuoEnglishLearn/layouts/default.vue"]]);
 
 export { _default as default };
-//# sourceMappingURL=default-sQjHY6Kk.mjs.map
+//# sourceMappingURL=default-CQ0bTqp3.mjs.map

@@ -28,21 +28,53 @@ const quest_post = defineEventHandler(async (event) => {
   try {
     const ip = event.node.req.headers["x-forwarded-for"];
     const s1 = getCookie(event, "s1");
-    const level = s1 != void 0 ? s1.level : 1;
-    const account = s1 != void 0 ? s1.account : "GUEST::" + ip;
+    const level = s1 != void 0 ? JSON.parse(s1).level : 1;
+    const account = s1 != void 0 ? JSON.parse(s1).account : "GUEST::" + ip;
     const body = await readBody(event);
-    const questdata = await findSQL("quest", { account, status: 0 });
+    const questdata = await findSQL("quest", {
+      account,
+      status: 0
+    });
     if (questdata.length == 1) {
-      const resultdata2 = await findSQL("collquest", { id: { "$in": questdata[0].questids } });
-      return { code: 200, message: "", result: { quest: resultdata2, answer: questdata[0].answer } };
+      const resultdata2 = await findSQL("collquest", {
+        id: { $in: questdata[0].questids }
+      });
+      return {
+        code: 200,
+        message: "",
+        result: { quest: resultdata2, answer: questdata[0].answer }
+      };
     }
-    const questids = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-    const resultdata = await findSQL("collquest", { id: { "$in": questids } });
+    const questids = [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ];
+    const resultdata = await findSQL("collquest", { id: { $in: questids } });
     var answer = [];
     for (var ii = 0; ii < questids.length; ii++)
       answer.push({ idx: questids[ii], status: 0, score: 100 });
-    await insertSQL("quest", [{ account, status: 0, questids, answer }]);
-    return { code: 200, message: "", result: { ...resultdata } };
+    await insertSQL("quest", [
+      { account, status: 0, questids, answer }
+    ]);
+    return { code: 200, message: "", result: resultdata };
   } catch (e) {
     console.log(e);
     return { code: 500, message: "Service Error.", result: null, error: e };

@@ -11,11 +11,11 @@ const styles = {
   "components/comLogin.vue": () => import('./comLogin-styles.DMRzciXX.mjs').then(interopDefault),
   "components/comForgetpassword.vue": () => import('./comForgetpassword-styles.gc23G_vf.mjs').then(interopDefault),
   "components/comRegister.vue": () => import('./comRegister-styles.VapXjKhe.mjs').then(interopDefault),
-  "components/comBottom.vue": () => import('./comBottom-styles.DIvcYxC2.mjs').then(interopDefault),
-  "components/comLogin.vue?vue&type=style&index=0&scoped=1fffa470&lang.css": () => import('./comLogin-styles.DDlYw3r8.mjs').then(interopDefault),
   "components/comNav.vue?vue&type=style&index=0&scoped=b4860d07&lang.css": () => import('./comNav-styles.DjouIzvd.mjs').then(interopDefault),
+  "components/comLogin.vue?vue&type=style&index=0&scoped=1fffa470&lang.css": () => import('./comLogin-styles.DDlYw3r8.mjs').then(interopDefault),
   "components/comForgetpassword.vue?vue&type=style&index=0&scoped=9b9d67e9&lang.css": () => import('./comForgetpassword-styles.BgJto_Bs.mjs').then(interopDefault),
   "components/comRegister.vue?vue&type=style&index=0&scoped=0a1021b0&lang.css": () => import('./comRegister-styles.BpszVTji.mjs').then(interopDefault),
+  "components/comBottom.vue": () => import('./comBottom-styles.DIvcYxC2.mjs').then(interopDefault),
   "components/comBottom.vue?vue&type=style&index=0&scoped=bae10c37&lang.css": () => import('./comBottom-styles.Ci1df4u9.mjs').then(interopDefault)
 };
 
