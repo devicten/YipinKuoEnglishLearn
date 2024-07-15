@@ -2,11 +2,14 @@
 import { reactive } from "vue";
   
 import $ from 'jquery'
-const { $bootstrap } = useNuxtApp();
+const { $bootstrap, $common, $qtls } = useNuxtApp();
   
 import { useAuthStore } from '~/stores/auth';
-const authStore = useAuthStore();
 
+  // a store info keep from server session.
+const store = useAuthStore();
+
+  // for ui text change.
 const state = reactive({
   quest: "",
   questdesc: "",
@@ -28,7 +31,7 @@ onMounted(() => {
   toastRR = $bootstrap.toast(toastRef.value);
   questRR = questRef.value;
   inputRR = inputRef.value;
-  setTimeout(Quest, 500);
+  setTimeout(Quest, 1500);
 });
   
 onBeforeUnmount(() => {
@@ -40,101 +43,49 @@ async function Quest()
   var isError = false;
   try
   {
-    const response = await fetch('/api/quest', {
-      method: "POST", // *GET, POST, PUT, DELETE, etc.
-      mode: "cors", // no-cors, *cors, same-origin
-      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-      credentials: "same-origin", // include, *same-origin, omit
-      headers: {
-        "Content-Type": "application/json",
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      redirect: "follow", // manual, *follow, error
-      referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-      body: '{}', // body data type must match "Content-Type" header
-    });
-    const result = await response.json();
-    if(result.code !== 200)
+    var resp = await $common.apiAsync<any>('POST', {},'/api/quest');
+    if(typeof(resp.result) === 'undefined')
     {
-      isError = true;
-      state.message = result.message;
-      toastRR.show();
-      return;
+      resp = await $common.apiAsync<any>('POST', {},'/api/quest');
+    }
+    // 將題目更新上 Session
+    await $common.doRetryAsync(() => { store.setQuest(resp.result); } , 5, 1000);
+    // 取得尚未回答最新一題
+    var q0 = $qtls.getFirstUnanswerQuest(resp.result.answer);
+    // 如果有紀錄依據紀錄為準
+    store.vIdx = (store.vIdx2 == -1) ? q0.idx : store.vIdx2;
+
+    store.vArrQuest = resp.result.quest;
+    store.showprevbtn = store.vIdx > 1;
+    store.shownextbtn = store.vIdx2 != -1 && store.vIdx < resp.result.answer.length - 1;
+
+    const currentQuest = resp.result.quest.find((obj) => obj.id === store.vIdx);
+    const currentAnswer = resp.result.answer.find((obj) => obj.idx === store.vIdx);
+    if (currentQuest && currentAnswer) {
+      const { answer, sentence, info0, info1, info2, info3, info4, info5 } = currentQuest;
+      Object.assign(state, {
+        word: answer,
+        quest: sentence,
+        info0,
+        info1,
+        info2,
+        info3,
+        info4,
+        info5,
+        score: currentAnswer.score
+      });
     }
     
-    try {
-      authStore.setQuest(result.result);
-    } catch (error) {
-      setTimeout(() => {
-        try { authStore.setQuest(result.result); } catch { }
-      }, 500);
-    }
-    
-    var d0 = result.result.answer.filter((obj) => obj.status === 0); 
-    var q0 = d0.reduce((previous, current) => {
-      return current.idx < previous.idx ? current : previous;
-    });
-    authStore.vIdx = q0.idx;
-    if(authStore.vIdx2 !== -1)
-      authStore.vIdx = authStore.vIdx2;
-    
-    authStore.showprevbtn = authStore.vIdx > 1;
-    authStore.shownextbtn = authStore.vIdx2 !== -1 && authStore.vIdx < result.result.answer.length;
-    
-    authStore.vArrQuest = result.result.quest;
-    var qq0 = result.result.quest.filter((obj) => obj.id === authStore.vIdx)[0];
-    var qa0 = result.result.answer.filter((obj) => obj.idx === authStore.vIdx)[0];
-    state.word = qq0.answer;
-    state.quest = qq0.quest;
-    state.info0 = qq0.info0;
-    state.info1 = qq0.info1;
-    state.info2 = qq0.info2;
-    state.info3 = qq0.info3;
-    state.info4 = qq0.info4;
-    state.info5 = qq0.info5;
-    state.score = qa0.score;
-    
-    var arrw = $(".w");
-    var questRefId = document.getElementById('questRefId');
-    for(var k = 0; k < arrw.length; k++)
-    {
-      if(arrw[k].tagName === 'DIV')
-        questRefId.removeChild(arrw[k]);
-    }
-    
+    $qtls.clearUIQuest();
         
-    var html = '';
-    var arrQuest = state.quest.split(' ');
-    for(var i=0;i<arrQuest.length;i++)
-    {
-      if(arrQuest[i] === state.word)
-      {
-        if(authStore.vIdx2 === -1)
-        {
-          var wb = document.createElement('div');
-          wb.textContent = "";
-          wb.setAttribute('class','w w-back');
-          wb.setAttribute('id','wbackref');
-          questRR.appendChild(wb);
-          var wbackref = document.getElementById('wbackref');
-          inputRR.style = `left: ${wbackref.offsetLeft}px;top: ${wbackref.offsetTop}px;`;
-        }
-        else
-        {
-          var w = document.createElement('div');
-          w.textContent = state.word;
-          w.setAttribute('class','w');
-          questRR.appendChild(w);
-        }
-      }
-      else
-      {
-        var w = document.createElement('div');
-        w.textContent = arrQuest[i];
-        w.setAttribute('class','w');
-        questRR.appendChild(w);
-      }
-    }
+    $qtls.genUIQuest(
+      state.quest,
+      state.word,
+      (store.vIdx2 === -1),
+      state.score,
+      questRR,
+      inputRR
+    );
   }
   catch(e)
   {
@@ -144,145 +95,106 @@ async function Quest()
   }
 }
 
-  /*
 async function onkeyup(e)
 {
   inputRR.value = '';
   var wbackref = document.getElementById('wbackref');
-  if(e.key === 'Backspace')
-  {
-    if(wbackref.innerText.length === 0)
-      return;
-    //wbackref.innerText += wbackref.innerText.substr(0,wbackref.innerText.length - 1);
-    wbackref.removeChild(wbackref.lastChild);
-    state.answer = wbackref.innerText;
-    inputRR.style = `left: ${wbackref.offsetLeft + 0 + (wbackref.innerText.length * 25)}px;top: ${wbackref.offsetTop}px;`;
-    return;
-  }
-  if(e.key === 'Enter')
-  {
-    var len = 0;
-    for(var i=0;i < state.answer.length;i++)
-    {
-      if(state.word.length > state.answer.length)
-        wbackref.children[i].classList.add("w-b");
-      if(state.answer.length > state.word.length)
-        wbackref.children[i].classList.add("w-a");
-        
-      if(state.word[i] != ToCDB(state.answer[i]))
-      {
-        wbackref.children[i].classList.add("w-b");
-      }
-      else
-      {
-        wbackref.children[i].classList.add("w-a");
-        len++;
-      }
-      wbackref.children[i].innerText = state.word[i];
-    }
+
+  if ($qtls.backspaceUIInput(e, inputRR, (newText) => {
+    state.answer = newText;
+  })) return;
     
-    if(state.score === 100)
-    {
-      state.score = Math.ceil(len / state.answer.length * 100);
-      setTimeout(function(){
-        for(var i=0;i < state.answer.length;i++)
-        {
-          wbackref.children[i].classList.remove("w-a");
-          wbackref.children[i].classList.remove("w-b");
-          wbackref.children[i].innerText = state.answer[i];
-        }
-      }, 3000);
+  if ($qtls.enterUIInput(
+    e, 
+    inputRR, 
+    state.word,
+    state.answer,
+    (newScroe) => {
+      if (newScroe < 100) return;
+      if(store.vRemainQuest <= 0)
+        newScroe -= 20;
+      if((store.vRemainQuest / store.vTimesQuest) >= 0.5)
+        newScroe += 20;
+      state.score = newScroe;
+      store.evtOnCorrect = true;
     }
-    if(len !== state.answer.length)
-      return;
-    
-    if(authStore.vRemainQuest <= 0)
-      state.score -= 20;
-    if((authStore.vRemainQuest / authStore.vTimesQuest) >= 0.5)
-      state.score += 20;
-    
-     const response = await fetch('/api/quest', {
-      method: "PUT", // *GET, POST, PUT, DELETE, etc.
-      mode: "cors", // no-cors, *cors, same-origin
-      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-      credentials: "same-origin", // include, *same-origin, omit
-      headers: {
-        "Content-Type": "application/json",
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      redirect: "follow", // manual, *follow, error
-      referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-      body: JSON.stringify({
-        idx: authStore.vIdx,
-        score: state.score
-      }), // body data type must match "Content-Type" header
-    });
-    const result = await response.json();
-    if(result.code !== 200)
-    {
-      isError = true;
-      state.message = result.message;
-      toastRR.show();
-      return;
-    }
-    location.reload();
-    return;
-  }
-  if(  (e.keyCode >= 48 && e.keyCode <=  57) 
-    || (e.keyCode >= 65 && e.keyCode <=  90) 
-    || (e.keyCode >= 96 && e.keyCode <= 105) )
-  {
-    var wb0 = document.createElement('div');
-    wb0.textContent = ToDBC(e.key);
-    wb0.setAttribute('class','w0');
-    wbackref.appendChild(wb0);
-    state.answer = wbackref.innerText;
-    inputRR.style = `left: ${wbackref.offsetLeft + 0 + (wbackref.innerText.length * 25)}px;top: ${wbackref.offsetTop}px;`;
-    return;
-  }
+  )) return;
+
+  $qtls.typingUIInput(e, inputRR, (newText) => {
+    state.answer = newText;
+  });
   return;
 }
 
 watch(
-  () => authStore.vIdx2,
+  () => store.vIdx2,
   (newValue, oldValue) => {
-    
     Quest();
   },
   { deep: true }
 );
 
-function ToDBC(txtstring) { 
-    var tmp = ""; 
-    for(var i=0;i<txtstring.length;i++){ 
-        if(txtstring.charCodeAt(i)==32){ 
-            tmp= tmp+ String.fromCharCode(12288); 
-        } 
-        if(txtstring.charCodeAt(i)<127){ 
-            tmp=tmp+String.fromCharCode(txtstring.charCodeAt(i)+65248); 
-        } 
-    } 
-    return tmp; 
-}
+watch(
+  () => store.evtOnCorrect,
+  (newValue, oldValue) => {
+    if(store.evtOnCorrect == true)
+    {
+       $common.apiAsync<any>(
+         'PUT', 
+         {
+           idx: store.vIdx,
+           score: state.score
+         },
+         '/api/quest');
 
-function ToCDB(str) { 
-    var tmp = ""; 
-    for(var i=0;i<str.length;i++){ 
-        if (str.charCodeAt(i) == 12288){
-            tmp += String.fromCharCode(str.charCodeAt(i)-12256);
-            continue;
-        }
-        if(str.charCodeAt(i) > 65280 && str.charCodeAt(i) < 65375){ 
-            tmp += String.fromCharCode(str.charCodeAt(i)-65248); 
-        } 
-        else{ 
-            tmp += String.fromCharCode(str.charCodeAt(i)); 
-        } 
-    } 
-    return tmp 
-} 
+      $qtls.endUIQuest(0, inputRR);
+    }
+  },
+  { deep: true }
+);
+  
 
-*/
+watch(
+  () => store.evtOnPass,
+  (newValue, oldValue) => {
+    if(store.evtOnPass == true)
+    {
+       $common.apiAsync<any>(
+         'PUT', 
+         {
+           idx: store.vIdx,
+           score: 0
+         },
+         '/api/quest');
+
+      $qtls.endUIQuest(0, inputRR);
+    }
+  },
+  { deep: true }
+);
+watch(
+  () => store.vTimesQuest,
+  (newValue, oldValue) => {
+    console.log(newValue, oldValue);
+    if(store.vTimesQuest == 0)
+    {
+       /*
+       時間到暫時沒有推送0分紀錄
+       const response = await $common.apiAsync<any>(
+         'PUT', 
+         {
+           idx: store.vIdx,
+           score: 0
+         },
+         '/api/quest');
+      */
+      $qtls.endUIQuest(0, inputRR);
+    }
+  },
+  { deep: true }
+);
+
+
 </script>
 
 <template>
@@ -294,8 +206,8 @@ function ToCDB(str) {
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   </div>
-  <div class="text-title text-center">新單字 - {{ authStore.vIdx }} - {{ state.score }} </div>
-  <div class="quest" id="questRefId" ref="questRef"><input ref="inputRef" type="text" class="w-input" /></div>
+  <div class="text-title text-center">新單字 - {{ store.vIdx }} - {{ state.score }} </div>
+  <div class="quest" id="questRefId" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
   <div class="text-desc text-first"> {{ state.info0 }} </div>
 </div>
 <div class="box-1">
@@ -328,5 +240,11 @@ function ToCDB(str) {
   {
     display: inline;
     font-size: 10px;
+  }
+  .w-correct {
+    color: #75b798 !important;
+  }
+  .w-wrong {
+    color: #ea868f !important;
   }
 </style>

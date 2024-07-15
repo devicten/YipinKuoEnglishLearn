@@ -35,8 +35,9 @@ export default defineEventHandler(async (event) => {
     ];
     const resultdata = await findSQL("collquest", { id: { $in: questids } });
     var answer = [];
-    for (var ii = 0; ii < questids.length; ii++)
+    for (var ii = 0; ii < questids.length; ii++) {
       answer.push({ idx: questids[ii], status: 0, score: 100 });
+    }
 
     await insertSQL("quest", [
       { account: account, status: 0, questids: questids, answer: answer },

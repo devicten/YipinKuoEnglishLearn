@@ -1,13 +1,15 @@
 <script lang="ts" setup>
 import { reactive } from "vue";
 import { useAuthStore } from '~/stores/auth';
-const { $bootstrap } = useNuxtApp();
-const authStore = useAuthStore();
+  
+const { $bootstrap, $common } = useNuxtApp();
+const store = useAuthStore();
 
 const state = reactive({
   message: ""
 });
-var times = authStore.vTimesQuest * 1000;
+  
+var times = store.vTimesQuest * 1000;
 const counterRef = ref(null);
 let counterRR;
 onMounted(() => {
@@ -15,27 +17,43 @@ onMounted(() => {
   counterRR.innerHTML = "";
 });
 
+var _t1: number;
+watch(
+  () => store.evtOnCorrect,
+  (newValue, oldValue) => {
+    
+    if(store.evtOnCorrect == true)
+    {
+      store.vRemainQuest = 0;  
+      store.vTimesQuest = 0;
+      counterRR.innerHTML = '00:00';
+      clearInterval(_t1);
+    }
+  },
+  { deep: true }
+);
 
 watch(
-  () => authStore.vTimesQuest,
+  () => store.vTimesQuest,
   (newValue, oldValue) => {
     if(newValue > 0 && oldValue == 0)
     {
-      times = authStore.vTimesQuest * 1000;
+      times = store.vTimesQuest * 1000;
       if(times > 60 * 1000)
         counterRR.innerHTML = new Date(times).toISOString().slice(11, 19);
       else
         counterRR.innerHTML = new Date(times).toISOString().slice(14, 19);
-      var _t1 = setInterval(function() { 
+      _t1 = setInterval(function() { 
         times = times-1000;
         if(times > 60 * 1000)
           counterRR.innerHTML = new Date(times).toISOString().slice(11, 19);
         else
           counterRR.innerHTML = new Date(times).toISOString().slice(14, 19);
           
-        authStore.vRemainQuest = times / 1000;  
+        store.vRemainQuest = times / 1000;  
         if(times == 0)
         {
+          store.vTimesQuest = 0;
           clearInterval(_t1);
         }
       }, 1200);
@@ -48,55 +66,32 @@ watch(
 async function pass()
 {
   console.log('pass');
-  try
-  {
-    const response = await fetch('/api/quest', {
-      method: "PUT", // *GET, POST, PUT, DELETE, etc.
-      mode: "cors", // no-cors, *cors, same-origin
-      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-      credentials: "same-origin", // include, *same-origin, omit
-      headers: {
-        "Content-Type": "application/json",
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      redirect: "follow", // manual, *follow, error
-      referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-      body: JSON.stringify({
-        idx: authStore.vIdx,
-        score: 0
-      }), // body data type must match "Content-Type" header
-    });
-    location.reload();
-    return;
-  }
-  catch(e)
-  {
-    console.log(e);
-  }
+  store.evtOnPass = true;
 }
 
 async function prev()
 {
-  for(var i = 0; i < authStore.vArrQuest.length; i++)
+  for(var i = 0; i < store.vArrQuest.length; i++)
   {
-    if(authStore.vArrQuest[i].id === (authStore.vIdx2 === -1 ? authStore.vIdx : authStore.vIdx2))
+    if(store.vArrQuest[i].id === (store.vIdx2 === -1 ? store.vIdx : store.vIdx2))
     {
       if(i === 0)
         return;
-      authStore.vIdx2 = authStore.vArrQuest[i-1].id;
+      store.vIdx2 = store.vArrQuest[i-1].id;
     }
   }
 }
 
 async function next()
 {
-  for(var i = 0; i < authStore.vArrQuest.length; i++)
+  for(var i = 0; i < store.vArrQuest.length; i++)
   {
-    if(authStore.vArrQuest[i].id === (authStore.vIdx2 === -1 ? authStore.vIdx : authStore.vIdx2))
+    if(store.vArrQuest[i].id === store.vIdx)
     {
-      if(i === authStore.vArrQuest.length - 1)
+      if(i === store.vArrQuest.length - 1)
         return;
-      authStore.vIdx2 = (authStore.vArrQuest[i+1].id === authStore.vIdx) ? authStore.vArrQuest[i+1].id : -1;
+      store.vIdx2 = (store.vArrQuest[i+1].id === store.vIdx) ? store.vArrQuest[i+1].id : -1;
+      return;
     }
   }
 }
@@ -111,9 +106,9 @@ async function next()
         </svg>
         <p class="inline-block fs-5" ref="counterRef"></p>
       </a>
-      <div class="position-absolute end-15 btn btn-info" v-show="authStore.showprevbtn" @click="prev">上一題</div>
-      <div class="position-absolute end-10 btn btn-info" v-show="authStore.shownextbtn" @click="next">下一題</div>
-      <div class="position-absolute end-5 btn btn-info" v-show="!authStore.shownextbtn" @click="pass">看答案</div>
+      <div class="position-absolute end-15 btn btn-info" v-show="store.showprevbtn" @click="prev">上一題</div>
+      <div class="position-absolute end-10 btn btn-info" v-show="store.shownextbtn" @click="next">下一題</div>
+      <div class="position-absolute end-5 btn btn-info" v-show="!store.shownextbtn" @click="pass">看答案</div>
     </div>
   </nav>
 </template>
